@@ -1,3 +1,5 @@
+.include "nes.inc"
+
 .segment "INES"
 .byte "NES", $1A
 .byte 1		; Size of PRG in units of 16 KiB.
@@ -14,13 +16,13 @@ nmi:
 ; http://wiki.nesdev.com/w/index.php/Programming_Basics
 reset:
 	lda #$01
-	sta $4015
+	sta APU_CHANCTRL
 	lda #$08
-	sta $4002
+	sta APU_PULSE1FTUNE
 	lda #$02
-	sta $4003
+	sta APU_PULSE1CTUNE
 	lda #$bf
-	sta $400
+	sta APU_PULSE1CTRL
 forever:
 	jmp forever
 
