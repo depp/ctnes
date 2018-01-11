@@ -1,7 +1,7 @@
 MEMORY {
     HEADER: start = $0000, size = $0010, type = rw, file = %O, fill = yes;
     PRG0:   start = $8000, size = $4000, type = ro, file = %O, fill = yes; 
-    CHR0:   start = $0000, size = $2000, type = ro, file = %O;
+    CHR0:   start = $0000, size = $2000, type = ro, file = %O, fill = yes;
 }
 
 SEGMENTS {
