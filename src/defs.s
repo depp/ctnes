@@ -1,9 +1,12 @@
-; PPU memory map.
+;;; ----------------------------------------------------------------------------
+;;; NES addresses.
+
+;;; PPU memory map.
 PPU_NAME0	= $2000
 PPU_ATTR0	= $23c0
 PPU_PAL0	= $3f00
 
-; PPU registers.
+;;; PPU registers.
 PPUCTRL		= $2000
 PPUMASK		= $2001
 PPUSTATUS	= $2002
@@ -13,8 +16,21 @@ PPUSCROLL	= $2005
 PPUADDR		= $2006
 PPUDATA		= $2007
 
+;;; Other IO registers.
 OAMDMA		= $4014
 APUSTATUS	= $4015
+JOYPAD1		= $4016
+JOYPAD2		= $4017
+
+;;; Controller buttons.
+BTN_A		= $80
+BTN_B		= $40
+BTN_SELECT	= $20
+BTN_START	= $10
+BTN_UP		= $08
+BTN_DOWN	= $04
+BTN_LEFT	= $02
+BTN_RIGHT	= $01
 
 .include "charmap.s"
 

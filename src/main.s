@@ -1,8 +1,17 @@
 .include "defs.s"
 
+.zeropage
+buttons:
+	.res 1
+
+.bss
+nmi_done:
+	.res 1
+
 ;;; ----------------------------------------------------------------------------
 ;;; Reset handler
 
+.code
 .proc reset
 	sei
 	cld
@@ -42,12 +51,13 @@
 	tax
 
 	asl
-	and #$38
+	and #$18
 	adc #$20
 	sta $0203, x		; X position
 
 	tya
-	and #$38
+	and #$3c
+	asl
 	adc #$20
 	sta $0200, x		; Y position
 
@@ -70,19 +80,35 @@
 	sta PPUCTRL
 	lda #%00010000
 	sta PPUMASK
-forever:
-	jmp forever
+mainloop:
+
+:	bit nmi_done
+	bpl :-
+	lda #0
+	sta nmi_done
+
+	;; Move sprite around.
+	lda buttons
+	lsr
+	bcc :+
+	inc $0203
+:	lsr
+	bcc :+
+	dec $0203
+:	lsr
+	bcc :+
+	inc $0200
+:	lsr
+	bcc :+
+	dec $0200
+:
+
+	jmp mainloop
 .endproc
 
 palette_data:
 	.byte $0f,$11,$21,$31,$0f,$14,$24,$34,$0f,$17,$27,$37,$0f,$1a,$2a,$3a
 	.byte $0f,$11,$21,$31,$0f,$14,$24,$34,$0f,$17,$27,$37,$0f,$1a,$2a,$3a
-
-object_data:
-	.byte $80,$01,$00,$80
-	.byte $80,$02,$01,$90
-	.byte $80,$03,$02,$a0
-	.byte $80,$04,$03,$b0
 
 ;;; ----------------------------------------------------------------------------
 ;;; NMI (vertical blank) handle
@@ -102,6 +128,22 @@ object_data:
 	sta OAMADDR
 	lda #$02
 	sta OAMDMA
+
+	;; Read the controller.
+	;; https://wiki.nesdev.com/w/index.php/Controller_Reading
+	;; We use the 1 to terminate the loop... once it shifts out, we end.
+	lda #1
+	sta JOYPAD1
+	sta buttons
+	lsr a
+	sta JOYPAD1
+:	lda JOYPAD1
+	lsr a
+	rol buttons
+	bcc :-
+
+	lda #$80
+	sta nmi_done
 
 	rti
 .endproc
