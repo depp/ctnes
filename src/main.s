@@ -89,7 +89,7 @@ object_data:
 
 .proc nmi
 	;; load palette
-	setppuaddr #$3f10
+	setppuaddr #($3f00 + $10)
 	ldx #0
 :	lda palette_data, x
 	sta PPUDATA

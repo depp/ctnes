@@ -21,12 +21,16 @@ APUSTATUS	= $4015
 ;;; setppuaddr sets the PPU address for writes.
 ;;; clobbered: A
 .macro setppuaddr addr
+	.if .paramcount <> 1
+	.error "neext exactly one argument"
+	.endif
+
 	lda PPUSTATUS		; Reset latch
 
 	.if .match(.left(1, {addr}), #)
-	lda #.hibyte(.right(1, {addr}))
+	lda #.hibyte(.right(.tcount({addr})-1, {addr}))
 	sta PPUADDR
-	lda #.lobyte(.right(1, {addr}))
+	lda #.lobyte(.right(.tcount({addr})-1, {addr}))
 	sta PPUADDR
 
 	.else
