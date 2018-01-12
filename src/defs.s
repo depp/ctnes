@@ -17,3 +17,19 @@ OAMDMA		= $4014
 APUSTATUS	= $4015
 
 .include "charmap.s"
+
+;;; setppuaddr sets the PPU address for writes.
+;;; clobbered: A
+.macro setppuaddr addr
+	lda PPUSTATUS		; Reset latch
+
+	.if .match(.left(1, {addr}), #)
+	lda #.hibyte(.right(1, {addr}))
+	sta PPUADDR
+	lda #.lobyte(.right(1, {addr}))
+	sta PPUADDR
+
+	.else
+	.error "Bad PPU address"
+	.endif
+.endmacro
