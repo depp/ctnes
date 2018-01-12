@@ -1,0 +1,19 @@
+; PPU memory map.
+PPU_NAME0	= $2000
+PPU_ATTR0	= $23c0
+PPU_PAL0	= $3f00
+
+; PPU registers.
+PPUCTRL		= $2000
+PPUMASK		= $2001
+PPUSTATUS	= $2002
+OAMADDR		= $2003
+OAMDATA		= $2004
+PPUSCROLL	= $2005
+PPUADDR		= $2006
+PPUDATA		= $2007
+
+OAMDMA		= $4014
+APUSTATUS	= $4015
+
+.include "charmap.s"

@@ -1,29 +1,9 @@
-PPU_PAL0	= $3f00
-PPU_NAME0	= $2000
-PPU_ATTR0	= $23c0
+.include "defs.s"
 
-; PPU registers.
-PPUCTRL		= $2000
-PPUMASK		= $2001
-PPUSTATUS	= $2002
-OAMADDR		= $2003
-OAMDATA		= $2004
-PPUSCROLL	= $2005
-PPUADDR		= $2006
-PPUDATA		= $2007
+;;; ----------------------------------------------------------------------------
+;;; Reset handler
 
-OAMDMA		= $4014
-APUSTATUS	= $4015
-
-.segment "INES"
-.byte $4e, $45, $53, $1a
-.byte 1		; Size of PRG in units of 16 KiB.
-.byte 1		; Size of CHR in units of 8 KiB.
-.byte 1		; Flags, vertical mirroring.
-
-.code
-
-reset:
+.proc reset
 	sei
 	cld
 	ldx #$ff
@@ -33,14 +13,14 @@ reset:
 	stx PPUMASK
 	stx APUSTATUS
 
-	; PPU warmup, wait two frames, plus a third later.
-	; http://forums.nesdev.com/viewtopic.php?f=2&t=3958
+	;; PPU warmup, wait two frames, plus a third later.
+	;; http://forums.nesdev.com/viewtopic.php?f=2&t=3958
 :	bit PPUSTATUS
 	bpl :-
 :	bit PPUSTATUS
 	bpl :-
 
-	; Zero ram.
+	;; Zero ram.
 	txa
 :	sta $000, x
 	sta $100, x
@@ -53,7 +33,7 @@ reset:
 	inx
 	bne :-
 
-	; generate sprites
+	;; Generate sprites.
 	ldy #$0
 :
 	tya
@@ -64,25 +44,25 @@ reset:
 	asl
 	and #$38
 	adc #$20
-	sta $0203, x	; X position
+	sta $0203, x		; X position
 
 	tya
 	and #$38
 	adc #$20
-	sta $0200, x	; Y position
+	sta $0200, x		; Y position
 
 	tya
 	and #$03
-	sta $0202, x	; Palette
+	sta $0202, x		; Palette
 
 	iny
 	tya
-	sta $0201, x	; Tile
+	sta $0201, x		; Tile
 	cpy #$40
 
 	bne :-
 
-
+	;; Final wait for PPU warmup.
 :	bit PPUSTATUS
 	bpl :-
 
@@ -92,6 +72,7 @@ reset:
 	sta PPUMASK
 forever:
 	jmp forever
+.endproc
 
 palette_data:
 	.byte $0f,$11,$21,$31,$0f,$14,$24,$34,$0f,$17,$27,$37,$0f,$1a,$2a,$3a
@@ -103,9 +84,11 @@ object_data:
 	.byte $80,$03,$02,$a0
 	.byte $80,$04,$03,$b0
 
-; NMI interrupt (vertical blank).
-nmi:
-	; load palette
+;;; ----------------------------------------------------------------------------
+;;; NMI (vertical blank) handle
+
+.proc nmi
+	;; load palette
 	lda PPUSTATUS
 	lda #$3f
 	sta PPUADDR
@@ -118,22 +101,26 @@ nmi:
 	cpx #$20
 	bne :-
 
-	; load sprites
+	;; load sprites
 	lda #0
 	sta OAMADDR
 	lda #$02
 	sta OAMDMA
 
 	rti
+.endproc
 
-; IRQ interrupt.
-irq:
+;;; ----------------------------------------------------------------------------
+;;; IRQ handler
+
+.proc irq
 	rti
+.endproc
+
+;;; ----------------------------------------------------------------------------
+;;; Vector table
 
 .segment "VECTOR"
 .addr nmi
 .addr reset
 .addr irq
-
-.segment "CHR0"
-.incbin "../data/font.chr"
