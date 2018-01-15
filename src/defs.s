@@ -38,7 +38,7 @@ BTN_RIGHT	= $01
 ;;; clobbered: A
 .macro setppuaddr addr
 	.if .paramcount <> 1
-	.error "neext exactly one argument"
+	.error "Expect exactly one argument"
 	.endif
 
 	lda PPUSTATUS		; Reset latch
