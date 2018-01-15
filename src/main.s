@@ -73,14 +73,35 @@ nmi_done:
 
 	bne :-
 
+	;; Generate background.
+	clc
+	setppuaddr # PPU_NAME0
+	lda #0
+	tay
+bgrows:	ldx #0
+bgrow:	sta PPUDATA
+	adc #1
+	inx
+	cpx #32
+	bne bgrow
+	iny
+	cpy #30
+	bne bgrows
+
+	lda #%00011011
+	ldx #0
+bgattr:	sta PPUDATA
+	inx
+	cpx #$40
+	bne bgattr
+
 	;; Final wait for PPU warmup.
 :	bit PPUSTATUS
 	bpl :-
 
+	;; Enable NMI. Any other graphical setup is done by the NMI handler.
 	lda #%10000000
 	sta PPUCTRL
-	lda #%00010000
-	sta PPUMASK
 mainloop:
 
 :	bit nmi_done
@@ -115,20 +136,20 @@ palette_data:
 ;;; NMI (vertical blank) handle
 
 .proc nmi
-	;; load palette
-	setppuaddr #$3f10
-	ldx #0
-:	lda palette_data, x
-	sta PPUDATA
-	inx
-	cpx #$10
-	bne :-
-
-	;; load sprites
+	;; Load sprites.
 	lda #0
 	sta OAMADDR
 	lda #$02
 	sta OAMDMA
+
+	;; Load palette.
+	setppuaddr #$3f00
+	ldx #0
+:	lda palette_data, x
+	sta PPUDATA
+	inx
+	cpx #$20
+	bne :-
 
 	;; Read the controller.
 	;; https://wiki.nesdev.com/w/index.php/Controller_Reading
@@ -142,6 +163,16 @@ palette_data:
 	lsr a
 	rol buttons
 	bcc :-
+
+	;; Set scroll.
+	lda #0
+	sta PPUSCROLL
+	sta PPUSCROLL
+
+	lda #%10000000
+	sta PPUCTRL
+	lda #%00011000
+	sta PPUMASK
 
 	lda #$80
 	sta nmi_done
