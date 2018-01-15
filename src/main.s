@@ -44,6 +44,7 @@ nmi_done:
 
 	;; Generate sprites.
 	ldy #$0
+	clc
 :
 	tya
 	asl
