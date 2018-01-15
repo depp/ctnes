@@ -100,7 +100,7 @@ bgattr:	sta PPUDATA
 	bpl :-
 
 	;; Enable NMI. Any other graphical setup is done by the NMI handler.
-	lda #%10000000
+	lda #PPUCTRL_NMI
 	sta PPUCTRL
 mainloop:
 
@@ -169,9 +169,9 @@ palette_data:
 	sta PPUSCROLL
 	sta PPUSCROLL
 
-	lda #%10000000
+	lda #PPUCTRL_NMI
 	sta PPUCTRL
-	lda #%00011000
+	lda #(PPUMASK_BG | PPUMASK_SP)
 	sta PPUMASK
 
 	lda #$80

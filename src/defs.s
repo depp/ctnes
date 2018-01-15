@@ -16,6 +16,25 @@ PPUSCROLL	= $2005
 PPUADDR		= $2006
 PPUDATA		= $2007
 
+;;; PPUCTRL flags.
+PPUCTRL_NAMEX	= $01		; Nametable X=1.
+PPUCTRL_NAMEY	= $02		; Nametable Y=1.
+PPUCTRL_VWRITE	= $04		; Write PPUDATA vertically (32 byte stride).
+PPUCTRL_SPRPAT	= $08		; Sprite pattern table 1.
+PPUCTRL_BGPAT	= $10		; Background pattern table 1.
+PPUCTRL_SPRSZ	= $20		; 8x16 sprites.
+PPUCTRL_NMI	= $80		; Enable NMI.
+
+;;; PPUMASK flags.
+PPUMASK_GRAY	= $01		; Grayscale output.
+PPUMASK_BGLEFT	= $02		; Enable left 8 columns of background.
+PPUMASK_SPLEFT	= $04		; Enable left 8 columns of sprites.
+PPUMASK_BG	= $08		; Enable background.
+PPUMASK_SP	= $10		; Enable sprites.
+PPUMASK_RED	= $20		; Emphasize red (green on PAL, Dendy).
+PPUMASK_GREEN	= $40		; Emphasize green (red on PAL, Dendy).
+PPUMASK_BLUE	= $80		; Emphasize blue.
+
 ;;; Other IO registers.
 OAMDMA		= $4014
 APUSTATUS	= $4015
