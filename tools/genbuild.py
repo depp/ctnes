@@ -12,6 +12,7 @@ buildfile = 'build.ninja'
 top_asm = [
     'main.s',
     'data.s',
+    'sprite.s',
 ]
 
 include_re = r'(?im)^\s*\.(?:inc.*)\s+"([-./\w]+)"'
@@ -46,7 +47,6 @@ class Builder:
         Arguments:
         src -- a Path
         """
-        return []
         try:
             return self.incmap[src]
         except KeyError:
@@ -122,12 +122,21 @@ def main():
         # Generated files
         b.genfiles(
             [build/'font.dat', build/'charmap.s'],
-            [data/'font.png', tools/'font.py'],
+            [data/'font.png', tools/'font.py', tools/'nes.py'],
             [
                 tools/'font.py',
                 '-font', data/'font.png',
                 '-data-out', build/'font.dat',
                 '-map-out', build/'charmap.s',
+            ])
+        b.genfiles(
+            [build/'spritedata.dat', build/'spritedata.s'],
+            [data/'hero.png', tools/'sprites.py', tools/'nes.py'],
+            [
+                tools/'sprites.py',
+                '-sprites', data/'hero.png',
+                '-pattern-out', build/'spritedata.dat',
+                '-asm-out', build/'spritedata.s',
             ])
 
         # Assembly files

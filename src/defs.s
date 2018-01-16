@@ -51,8 +51,6 @@ BTN_DOWN	= $04
 BTN_LEFT	= $02
 BTN_RIGHT	= $01
 
-.include "charmap.s"
-
 ;;; setppuaddr sets the PPU address for writes.
 ;;; clobbered: A
 .macro setppuaddr addr
@@ -72,3 +70,14 @@ BTN_RIGHT	= $01
 	.error "Bad PPU address"
 	.endif
 .endmacro
+
+;;; ----------------------------------------------------------------------------
+;;; RAM
+
+;;; 256-byte buffer where we store OAM data for the next frame.
+oam_buffer = $0200
+
+;;; Parameters for emit_sprite
+.globalzp sprite_x, sprite_y, sprite_index
+;;; Write a sprite to the sprite buffer.
+.global emit_sprite

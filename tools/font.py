@@ -1,20 +1,9 @@
 import argparse
 import PIL.Image as image
 import numpy
-import pathlib
 import sys
 
-def make_chr(sprites):
-    """Convert an array of sprites to CHR data.
-
-    The input should have shape (n,8,8) or (n,16,8) and type uint8.
-    """
-    n, h, w = sprites.shape
-    if h not in (8, 16) or w != 8:
-        raise ValueError('bad sprite dimensions: {}x{}'.format(w, h))
-    d = sprites[:,None] >> numpy.array([0, 1], numpy.uint8)[None,:,None,None]
-    d &= 1
-    return numpy.packbits(d, axis=3).tobytes()
+import nes
 
 def main():
     p = argparse.ArgumentParser(
@@ -40,9 +29,8 @@ def main():
     shadow[:,0,:] = 0
     shadow[:,:,0] = 0
     glyphs = numpy.where(hilite, hilite, shadow)
-    data = make_chr(glyphs)
     with open(args.data_out, 'wb') as fp:
-        fp.write(make_chr(glyphs))
+        fp.write(nes.make_pattern(glyphs))
     with open(args.map_out, 'w') as fp:
         for n, index in enumerate(indexes):
             index = int(index) + 32

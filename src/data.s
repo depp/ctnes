@@ -17,4 +17,5 @@ mirroring = 1
 	.byte mapper & $f0
 
 .segment "CHR0"
-	.incbin "../build/font.dat"
+	.incbin "../build/spritedata.dat"
+	;.incbin "../build/font.dat"

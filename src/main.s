@@ -8,6 +8,11 @@ buttons:
 nmi_done:
 	.res 1
 
+player_x:
+	.res 1
+player_y:
+	.res 1
+
 ;;; ----------------------------------------------------------------------------
 ;;; Reset handler
 
@@ -42,37 +47,6 @@ nmi_done:
 	inx
 	bne :-
 
-	;; Generate sprites.
-	ldy #$0
-	clc
-:
-	tya
-	asl
-	asl
-	tax
-
-	asl
-	and #$18
-	adc #$20
-	sta $0203, x		; X position
-
-	tya
-	and #$3c
-	asl
-	adc #$20
-	sta $0200, x		; Y position
-
-	tya
-	and #$03
-	sta $0202, x		; Palette
-
-	iny
-	tya
-	sta $0201, x		; Tile
-	cpy #$40
-
-	bne :-
-
 	;; Generate background.
 	clc
 	setppuaddr # PPU_NAME0
@@ -95,6 +69,11 @@ bgattr:	sta PPUDATA
 	cpx #$40
 	bne bgattr
 
+	;; Initialize player state.
+	lda #$40
+	sta player_x
+	sta player_y
+
 	;; Final wait for PPU warmup.
 :	bit PPUSTATUS
 	bpl :-
@@ -113,17 +92,26 @@ mainloop:
 	lda buttons
 	lsr
 	bcc :+
-	inc $0203
+	inc player_x
 :	lsr
 	bcc :+
-	dec $0203
+	dec player_x
 :	lsr
 	bcc :+
-	inc $0200
+	inc player_y
 :	lsr
 	bcc :+
-	dec $0200
+	dec player_y
 :
+
+	lda player_x
+	sta sprite_x
+	lda player_y
+	sta sprite_y
+	lda #0
+	tay
+	sta sprite_index
+	jsr emit_sprite
 
 	jmp mainloop
 .endproc
@@ -169,7 +157,7 @@ palette_data:
 	sta PPUSCROLL
 	sta PPUSCROLL
 
-	lda #PPUCTRL_NMI
+	lda #(PPUCTRL_NMI | PPUCTRL_SPRSZ)
 	sta PPUCTRL
 	lda #(PPUMASK_BG | PPUMASK_SP)
 	sta PPUMASK
