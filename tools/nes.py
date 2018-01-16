@@ -78,3 +78,46 @@ def nes_palette():
         pal = pal[:n]
     _nes_palette = pal
     return pal
+
+class DataWriter:
+    """DataWriter writes data to an assembly file as .incbin statements."""
+    def __init__(self, asmpath, datpath):
+        asmfp, datfp = None, None
+        try:
+            asmfp = open(asmpath, 'w')
+            datfp = open(datpath, 'wb')
+            self.asmfp = asmfp
+            self.datfp = datfp
+            self.pos = 0
+            self.amt = 0
+            self.datname = os.path.basename(datpath)
+        except:
+            if asmfp is not None:
+                asmfp.close()
+            if datfp is not None:
+                datfp.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self.flush()
+        self.asmfp.close()
+        self.datfp.close()
+
+    def flush(self):
+        if not self.amt:
+            return
+        self.asmfp.write('.incbin "{}", {}, {}\n'.format(
+            self.datname, self.pos, self.amt))
+        self.pos += self.amt
+        self.amt = 0
+
+    def write_asm(self, text):
+        self.flush()
+        self.asmfp.write(text)
+
+    def write(self, data):
+        self.datfp.write(data)
+        self.amt += len(data)

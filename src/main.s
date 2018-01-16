@@ -3,6 +3,8 @@
 .zeropage
 buttons:
 	.res 1
+copyptr:
+	.res 2
 
 .bss
 nmi_done:
@@ -47,27 +49,21 @@ player_y:
 	inx
 	bne :-
 
-	;; Generate background.
-	clc
-	setppuaddr # PPU_NAME0
-	lda #0
-	tay
-bgrows:	ldx #0
-bgrow:	sta PPUDATA
-	adc #1
-	inx
-	cpx #32
-	bne bgrow
+	;; Load background.
+	setppuaddr #PPU_NAME0
+	lda #.lobyte(leveldata)
+	sta copyptr
+	lda #.hibyte(leveldata)
+	sta copyptr + 1
+	ldx #4
+blocks:	ldy #0
+block:	lda (copyptr), y
+	sta PPUDATA
 	iny
-	cpy #30
-	bne bgrows
-
-	lda #%00011011
-	ldx #0
-bgattr:	sta PPUDATA
-	inx
-	cpx #$40
-	bne bgattr
+	bne block
+	inc copyptr + 1
+	dex
+	bne blocks
 
 	;; Initialize player state.
 	lda #$40
@@ -159,7 +155,7 @@ palette_data:
 	sta PPUSCROLL
 	sta PPUSCROLL
 
-	lda #(PPUCTRL_NMI | PPUCTRL_SPRSZ)
+	lda #(PPUCTRL_NMI | PPUCTRL_BGPAT | PPUCTRL_SPRSZ)
 	sta PPUCTRL
 	lda #(PPUMASK_BG | PPUMASK_SP)
 	sta PPUMASK

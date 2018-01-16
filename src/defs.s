@@ -81,3 +81,6 @@ oam_buffer = $0200
 .globalzp sprite_x, sprite_y, sprite_index
 ;;; Write a sprite to the sprite buffer.
 .global emit_sprite
+
+;;; The level data, as a raw PPU name table.
+.import leveldata

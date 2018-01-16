@@ -16,6 +16,6 @@ mirroring = 1
 	.byte ((mapper & $0f) << 4) | (mirroring & 1)
 	.byte mapper & $f0
 
-.segment "CHR0"
+.segment "CHR0a"
 	.incbin "../build/spritedata.dat"
 	;.incbin "../build/font.dat"

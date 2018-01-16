@@ -9,10 +9,13 @@ outfile = 'ctnes.nes'
 
 buildfile = 'build.ninja'
 
-top_asm = [
+src_asm = [
     'main.s',
     'data.s',
     'sprite.s',
+]
+built_asm = [
+    'leveldata.s',
 ]
 
 include_re = r'(?im)^\s*\.(?:inc.*)\s+"([-./\w]+)"'
@@ -72,9 +75,8 @@ class Builder:
         parents.pop()
         return result
 
-    def assemble(self, src):
-        srcpath = self.srcpath / src
-        objpath = (self.buildpath / src).with_suffix('.o')
+    def assemble(self, srcpath):
+        objpath = (self.buildpath / srcpath.name).with_suffix('.o')
         self.w.build(
             [str(objpath)],
             'asm',
@@ -96,6 +98,7 @@ def main():
     tools = Path('tools')
     build = Path('build')
     data = Path('data')
+    level = Path('level')
 
     tmpfile = buildfile + '.tmp'
     with open(tmpfile, 'w') as fp:
@@ -137,11 +140,22 @@ def main():
                 '-pattern-out', build/'spritedata.dat',
                 '-asm-out', build/'spritedata.s',
             ])
+        b.genfiles(
+            [build/'leveldata.s', build/'leveldata.dat'],
+            [tools/'levels.py', tools/'nes.py', level/'test1.tmx'] +
+            list(level.glob('*.tsx')),
+            [
+                tools/'levels.py', level/'test1.tmx',
+                '-data-out', build/'leveldata.dat',
+                '-asm-out', build/'leveldata.s',
+            ])
 
         # Assembly files
         objs = []
-        for path in top_asm:
-            objs.append(b.assemble(path))
+        for path in src_asm:
+            objs.append(b.assemble(src / path))
+        for path in built_asm:
+            objs.append(b.assemble(build / path))
 
         # Outputs
         exepath = build/outfile
