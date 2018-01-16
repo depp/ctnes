@@ -1,6 +1,8 @@
+import argparse
 import PIL.Image as image
 import numpy
 import pathlib
+import sys
 
 def make_chr(sprites):
     """Convert an array of sprites to CHR data.
@@ -15,11 +17,15 @@ def make_chr(sprites):
     return numpy.packbits(d, axis=3).tobytes()
 
 def main():
-    srcdir = pathlib.Path(__file__).resolve().parent.parent
-    inpath = srcdir / 'data/font.png'
-    chrpath = inpath.with_suffix('.chr')
-    mappath = srcdir / 'src/charmap.s'
-    img = image.open(inpath)
+    p = argparse.ArgumentParser(
+        'font.py',
+        description='Convert game font files.',
+        allow_abbrev=False)
+    p.add_argument('-font', required=True)
+    p.add_argument('-data-out', required=True)
+    p.add_argument('-map-out', required=True)
+    args = p.parse_args()
+    img = image.open(args.font)
     img = img.convert('L')
     img = numpy.where(img, numpy.uint8(1), numpy.uint8(0))
     glyphs = numpy.array(numpy.split(img, 16, axis=1))
@@ -35,8 +41,9 @@ def main():
     shadow[:,:,0] = 0
     glyphs = numpy.where(hilite, hilite, shadow)
     data = make_chr(glyphs)
-    chrpath.write_bytes(data)
-    with mappath.open('w') as fp:
+    with open(args.data_out, 'wb') as fp:
+        fp.write(make_chr(glyphs))
+    with open(args.map_out, 'w') as fp:
         for n, index in enumerate(indexes):
             index = int(index) + 32
             if index > 127:
