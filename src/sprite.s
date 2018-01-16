@@ -19,6 +19,7 @@ sprite_index:
 	ldy #0			; Y = output OAM offset
 loop:
 	lda yoffsets, x
+	clc
 	adc sprite_y
 	sta oam_buffer, y	; Y position
 	iny
@@ -29,6 +30,7 @@ loop:
 	sta oam_buffer, y	; Attributes
 	iny
 	lda xoffsets, x
+	clc
 	adc sprite_x
 	sta oam_buffer, y	; X position
 	iny
