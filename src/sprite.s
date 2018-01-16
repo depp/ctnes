@@ -25,7 +25,7 @@ loop:
 	lda indexes, x
 	sta oam_buffer, y	; Tile index
 	iny
-	lda #0
+	lda palettes, x
 	sta oam_buffer, y	; Attributes
 	iny
 	lda xoffsets, x

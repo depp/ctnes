@@ -133,8 +133,7 @@ def main():
             [build/'spritedata.dat', build/'spritedata.s'],
             [data/'hero.png', tools/'sprites.py', tools/'nes.py'],
             [
-                tools/'sprites.py',
-                '-sprites', data/'hero.png',
+                tools/'sprites.py', 'compile', data/'hero.png',
                 '-pattern-out', build/'spritedata.dat',
                 '-asm-out', build/'spritedata.s',
             ])

@@ -1,4 +1,5 @@
 import numpy
+import os
 
 def make_pattern(sprites):
     """Convert an array of sprites to PPU pattern data.
@@ -51,3 +52,29 @@ def print_data(dtype, data, fp):
         sep = ','
     if pos:
         fp.write('\n')
+
+def nes_palette():
+    global _nes_palette
+    try:
+        return _nes_palette
+    except NameError:
+        pass
+    palpath = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'palette.gpl')
+    with open(palpath) as fp:
+        for line in fp:
+            if line.startswith('#'):
+                break
+        pal = numpy.zeros((256, 3), numpy.uint8)
+        n = 0
+        for line in fp:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            rgb = line.split()[:3]
+            for i in range(3):
+                pal[n,i] = int(rgb[i])
+            n += 1
+        pal = pal[:n]
+    _nes_palette = pal
+    return pal

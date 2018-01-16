@@ -20,6 +20,7 @@ class Part:
     xoff = attr.ib()
     yoff = attr.ib()
     sprite = attr.ib()
+    palette = attr.ib()
 
 def find_sprite(arr):
     """Find bounding box of a single sprite in a 2D boolean array."""
@@ -56,22 +57,25 @@ class Sprites:
     def load(class_, inpath):
         img = image.open(inpath)
         assert img.mode == 'P'
+        imgpalette = numpy.array(img.getpalette(), numpy.uint8).reshape((-1, 3))
         img = numpy.array(img)
         mark = img[0,0]
+        img[0,0] = 0
         ncolors = numpy.amax(img)
+        imgpalette = imgpalette[:ncolors]
         # Transparent must be palette index 0.
         assert img[0,1] == 0
         # Get map from palette colors to 0..3 indexes.
         pcolors = img[:,0:3]
         pcolors = pcolors[numpy.where(numpy.amin(pcolors, axis=1))[0]]
+        pcolors = numpy.pad(pcolors, ((0, 0), (1, 0)), 'constant')
         pmap = numpy.zeros((len(pcolors), ncolors), numpy.uint8)
         pmask = numpy.zeros((ncolors,), numpy.uint8)
         pmap[:,1:] = 0xff
-        prange = numpy.arange(1, 4)
+        prange = numpy.arange(0, 4)
         for i in range(len(pcolors)):
             pmap[i][pcolors[i]] = prange
             pmask[pcolors[i]] |= 1 << i
-        pmask[0] |= (1 << len(pcolors)) - 1
         # Convert each sprite.
         img = img[:,3:]
         pats = []
@@ -101,19 +105,22 @@ class Sprites:
                 for i in range(len(pmap)):
                     if (smask >> i) & 1:
                         rows = pmap[i,rows]
+                        palette = i
                         break
                 else:
-                    raise ValueError('too many colors')
+                    raise ValueError('no matching palette')
                 nsprite = (rows.shape[1] + 7) // 8
                 for x in range(0, nsprite * 8, 8):
                     sprite.append(Part(
                         x + xmin - xorigin,
                         y - yorigin,
                         len(pats),
+                        palette,
                     ))
                     pats.append(rows[:,x:x+8])
             sprites.append(sprite)
         self = class_()
+        self.palettes = imgpalette[pcolors]
         self.sprites = sprites
         self.patterns = numpy.array(pats)
         return self
@@ -128,13 +135,14 @@ class Sprites:
             sparr[i] = n
             n += len(sprite)
         sparr[len(self.sprites)] = n
-        parr = numpy.zeros((3, n), numpy.int32)
+        parr = numpy.zeros((4, n), numpy.int32)
         n = 0
         for sprite in self.sprites:
             for part in sprite:
                 parr[0,n] = part.xoff
                 parr[1,n] = part.yoff
                 parr[2,n] = part.sprite
+                parr[3,n] = part.palette
                 n += 1
         if numpy.any(parr[2] > 255):
             raise ValueError('too many sprites')
@@ -145,6 +153,7 @@ class Sprites:
             ('xoffsets', numpy.int8),
             ('yoffsets', numpy.int8),
             ('indexes', numpy.uint8),
+            ('palettes', numpy.uint8),
         ]
         for (name, dtype), data in zip(names, parr):
             print(name + ':', file=fp)
@@ -155,16 +164,38 @@ def main():
         'sprites.py',
         description='Convert game sprite files.',
         allow_abbrev=False)
-    p.add_argument('-sprites', required=True)
-    p.add_argument('-pattern-out', required=True)
-    p.add_argument('-asm-out', required=True)
+
+    ss = p.add_subparsers(dest='command')
+    ss.required = True
+    ss.dest = 'command'
+
+    pp = ss.add_parser('compile')
+    pp.add_argument('sprites')
+    pp.add_argument('-pattern-out', required=True)
+    pp.add_argument('-asm-out', required=True)
+
+    pp = ss.add_parser('show-palette')
+    pp.add_argument('sprites')
+
     args = p.parse_args()
 
     sprites = Sprites.load(args.sprites)
-    with open(args.pattern_out, 'wb') as fp:
-        sprites.write_pattern(fp)
-    with open(args.asm_out, 'w') as fp:
-        sprites.write_asm(fp)
+    if args.command == 'compile':
+        with open(args.pattern_out, 'wb') as fp:
+            sprites.write_pattern(fp)
+        with open(args.asm_out, 'w') as fp:
+            sprites.write_asm(fp)
+    elif args.command == 'show-palette':
+        npal = numpy.array(nes.nes_palette(), numpy.int32)
+        pals = numpy.array(sprites.palettes, numpy.int32)
+        indexes = numpy.argmin(
+            numpy.sum(
+                numpy.abs(pals[:,:,None,:] - npal[None,None,:,:]),
+                axis=3),
+            axis=2)
+        indexes[:,0] = 15
+        for row in indexes:
+            print('.byte', ','.join('${:02x}'.format(x) for x in row))
 
 if __name__ == '__main__':
     main()
