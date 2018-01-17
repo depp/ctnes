@@ -3,6 +3,8 @@
 .zeropage
 buttons:
 	.res 1
+buttonpress:
+	.res 1
 copyptr:
 	.res 2
 
@@ -14,6 +16,8 @@ player_x:
 	.res 1
 player_y:
 	.res 1
+paldata:
+	.res 32
 
 ;;; ----------------------------------------------------------------------------
 ;;; Reset handler
@@ -65,6 +69,14 @@ block:	lda (copyptr), y
 	dex
 	bne blocks
 
+	;; Initialize palette state.
+	ldx #0
+:	lda palette_data, x
+	sta paldata, x
+	inx
+	cpx #$20
+	bne :-
+
 	;; Initialize player state.
 	lda #$40
 	sta player_x
@@ -100,6 +112,7 @@ mainloop:
 	dec player_y
 :
 
+	;; Move player.
 	lda player_x
 	sta sprite_x
 	lda player_y
@@ -109,11 +122,17 @@ mainloop:
 	sta sprite_index
 	jsr emit_sprite
 
+	jsr debug_palette
+
 	jmp mainloop
 .endproc
 
+
 palette_data:
-	.byte $0f,$11,$21,$31,$0f,$14,$24,$34,$0f,$17,$27,$37,$0f,$1a,$2a,$3a
+	.byte $0f,$01,$11,$1c
+	.byte $0f,$01,$00,$10
+	.byte $0f,$07,$17,$27
+	.byte $0f,$09,$28,$38
 	.byte $0f,$02,$17,$36
 	.byte $0f,$02,$12,$2c
 	.res 8
@@ -131,13 +150,15 @@ palette_data:
 	;; Load palette.
 	setppuaddr #$3f00
 	ldx #0
-:	lda palette_data, x
+:	lda paldata, x
 	sta PPUDATA
 	inx
 	cpx #$20
 	bne :-
 
 	;; Read the controller.
+	lda buttons
+	sta buttonpress
 	;; https://wiki.nesdev.com/w/index.php/Controller_Reading
 	;; We use the 1 to terminate the loop... once it shifts out, we end.
 	lda #1
@@ -149,6 +170,11 @@ palette_data:
 	lsr a
 	rol buttons
 	bcc :-
+	;; Calculate delta.
+	lda #$ff
+	eor buttonpress
+	and buttons
+	sta buttonpress
 
 	;; Set scroll.
 	lda #0

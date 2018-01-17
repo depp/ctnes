@@ -12,6 +12,7 @@ buildfile = 'build.ninja'
 src_asm = [
     'main.s',
     'data.s',
+    'debug_palette.s',
     'sprite.s',
 ]
 built_asm = [
